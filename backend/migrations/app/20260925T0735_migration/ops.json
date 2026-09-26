@@ -1,0 +1,340 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.download",
+    "label": "Create table \"download\"",
+    "summary": "Creates table \"download\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "download"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"download\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"download\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"download\"",
+        "sql": "CREATE TABLE \"public\".\"download\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"movieId\" int4 NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"download\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"download\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.movie",
+    "label": "Create table \"movie\"",
+    "summary": "Creates table \"movie\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "movie"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"movie\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"movie\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"movie\"",
+        "sql": "CREATE TABLE \"public\".\"movie\" (\n  \"backdropUrl\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"description\" text,\n  \"duration\" int4,\n  \"genre\" text,\n  \"id\" SERIAL NOT NULL,\n  \"language\" text,\n  \"posterUrl\" text,\n  \"rating\" float8,\n  \"releaseDate\" timestamptz,\n  \"title\" text NOT NULL,\n  \"tmdbId\" int4,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"movie\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"movie\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.user",
+    "label": "Create table \"user\"",
+    "summary": "Creates table \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"user\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"user\"",
+        "sql": "CREATE TABLE \"public\".\"user\" (\n  \"id\" SERIAL NOT NULL,\n  \"role\" text DEFAULT 'USER' NOT NULL,\n  \"username\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"user_role_check_1954e8c0\" CHECK (\"role\" IN ('USER', 'ADMIN'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"user\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.movie.movie_tmdbId_key",
+    "label": "Add unique constraint on \"movie\" (tmdbId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "movie_tmdbId_key",
+        "table": "movie"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"movie_tmdbId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "movie_tmdbId_key",
+          "public",
+          "\"public\".\"movie\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"movie_tmdbId_key\"",
+        "sql": "ALTER TABLE \"public\".\"movie\" ADD CONSTRAINT \"movie_tmdbId_key\" UNIQUE (\"tmdbId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"movie_tmdbId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "movie_tmdbId_key",
+          "public",
+          "\"public\".\"movie\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.download.download_movieId_idx_8cb9f9db",
+    "label": "Create index \"download_movieId_idx_8cb9f9db\" on \"download\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "download_movieId_idx_8cb9f9db",
+        "table": "download"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"download_movieId_idx_8cb9f9db\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"download_movieId_idx_8cb9f9db\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"download_movieId_idx_8cb9f9db\"",
+        "sql": "CREATE INDEX \"download_movieId_idx_8cb9f9db\" ON \"public\".\"download\" (\"movieId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"download_movieId_idx_8cb9f9db\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"download_movieId_idx_8cb9f9db\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.download.download_userId_idx_a489d58a",
+    "label": "Create index \"download_userId_idx_a489d58a\" on \"download\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "download_userId_idx_a489d58a",
+        "table": "download"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"download_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"download_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"download_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"download_userId_idx_a489d58a\" ON \"public\".\"download\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"download_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"download_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.download.download_userId_fkey",
+    "label": "Add foreign key \"download_userId_fkey\" on \"download\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "download_userId_fkey",
+        "table": "download"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"download_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "download_userId_fkey",
+          "public",
+          "\"public\".\"download\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"download_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"download\"\nADD CONSTRAINT \"download_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"download_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "download_userId_fkey",
+          "public",
+          "\"public\".\"download\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.download.download_movieId_fkey",
+    "label": "Add foreign key \"download_movieId_fkey\" on \"download\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "download_movieId_fkey",
+        "table": "download"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"download_movieId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "download_movieId_fkey",
+          "public",
+          "\"public\".\"download\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"download_movieId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"download\"\nADD CONSTRAINT \"download_movieId_fkey\"\nFOREIGN KEY (\"movieId\")\nREFERENCES \"public\".\"movie\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"download_movieId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "download_movieId_fkey",
+          "public",
+          "\"public\".\"download\""
+        ]
+      }
+    ]
+  }
+]

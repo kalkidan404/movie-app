@@ -1,0 +1,39 @@
+// use prisma-8
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  username     String?    @unique
+  passwordHash String
+  role         Role       @default(USER)
+  downloads    Download[]
+}
+
+model Movie {
+  id          Int               @id @default(autoincrement())
+  tmdbId      Int?              @unique
+  title       String
+  description String?
+  releaseDate DateTime?
+  genre       String?
+  duration    Int?
+  posterUrl   String?
+  backdropUrl String?
+  language    String?
+  rating      Float?
+  downloads   Download[]
+  createdAt   TimestamptzString @default(now())
+}
+
+model Download {
+  id        Int               @id @default(autoincrement())
+  userId    Int
+  movieId   Int
+  user      User              @relation(fields: [userId], references: [id])
+  movie     Movie             @relation(fields: [movieId], references: [id])
+  createdAt TimestamptzString @default(now())
+}
