@@ -5,7 +5,7 @@ import { RecommendedMovieCard } from "../components/recommendedMovie";
 import { MovieCard } from "../components/moviecard";
 import { AddMovieForm } from "../components/addMovieForm";
 import { Footer } from "../components/footer";
-
+import {Header} from "../components/header"
 const HomePage = () => {
     const [movies, setMovies] = useState([]);
     const [Allmovies, setAllmovies] = useState([]);
@@ -61,7 +61,7 @@ const HomePage = () => {
 
     return (
         <div className="home-page">
-
+<Header/>
             <section className="recommended-section">
                 <h2>Recommended for You</h2>
 
