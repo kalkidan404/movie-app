@@ -1,10 +1,10 @@
-const express=require("express");
-const cors=require("cors")
+import express from "express";
+import cors from "cors";
 const app=express()
-const movies=require("./router/movieRouter")
-const downloads=require("./router/downloads")
+import {Movieroute} from "./router/movieRouter.js";
+import {downloadsRouter} from "./router/downloadsRouter.js";
 app.use(cors());
 app.use(express.json());
-app.use("/", movies);
-app.use("/downloads", downloads);
-module.exports=app;
+app.use("/movies", Movieroute);
+app.use("/downloads", downloadsRouter);
+export{app}

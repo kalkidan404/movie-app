@@ -1,51 +1,111 @@
-import { Temporal } from "@js-temporal/polyfill";
-
-globalThis.Temporal = Temporal;
-
+import "dotenv/config";
 import { db } from "./db.js";
 
-async function seed() {
-    await db.orm.public.User.create({
-        username: "admin",
-        role: "ADMIN"
-    });
+const TMDB_TOKEN = process.env.TMDB_TOKEN;
 
-    await db.orm.public.Movie.createAll([
-        {
-            title: "Inception",
-            description: "A thief who enters the dreams of others.",
-            releaseDate: new Date("2010-07-16"),
-            genre: "Sci-Fi",
-            duration: 148,
-            language: "English",
-            rating: 8.8
-        },
-        {
-            title: "Interstellar",
-            description: "A journey through space and time.",
-            releaseDate: new Date("2014-11-07"),
-            genre: "Sci-Fi",
-            duration: 169,
-            language: "English",
-            rating: 8.7
-        },
-        {
-            title: "The Dark Knight",
-            description: "Batman faces a dangerous criminal in Gotham.",
-            releaseDate: new Date("2008-07-18"),
-            genre: "Action",
-            duration: 152,
-            language: "English",
-            rating: 9.0
-        }
-    ]);
-
-    console.log("Database seeded successfully.");
-
-    await db.close();
+if (!TMDB_TOKEN) {
+    throw new Error("TMDB_TOKEN is missing from .env");
 }
 
-seed().catch((error) => {
-    console.error(error);
-    process.exit(1);
-});
+const headers = {
+    Authorization: `Bearer ${TMDB_TOKEN}`,
+    accept: "application/json"
+};
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const getMoviesFromTMDB = async () => {
+    const response = await fetch(
+        "https://api.themoviedb.org/3/discover/movie?language=en-US&sort_by=popularity.desc&page=1",
+        { headers }
+    );
+
+    if (!response.ok) {
+        throw new Error(`TMDB request failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    return data.results;
+};
+
+const getMovieDetails = async (tmdbId) => {
+    const response = await fetch(
+        `https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`,
+        { headers }
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Failed to get movie ${tmdbId}: ${response.status}`
+        );
+    }
+
+    return response.json();
+};
+
+const seed = async () => {
+    try {
+        console.log("Fetching movies from TMDB...");
+
+        const movies = await getMoviesFromTMDB();
+
+        console.log(`Found ${movies.length} movies.`);
+
+        for (const movie of movies) {
+            console.log(`Processing: ${movie.title}`);
+
+            const details = await getMovieDetails(movie.id);
+
+            const existingMovie = await db.orm.public.Movie
+                .where({ tmdbId: details.id })
+                .first();
+
+            if (existingMovie) {
+                console.log(`Already exists: ${details.title}`);
+                continue;
+            }
+
+            await db.orm.public.Movie.create({
+                tmdbId: details.id,
+                title: details.title,
+                description: details.overview || null,
+
+                releaseDate: details.release_date
+                    ? new Date(details.release_date)
+                    : null,
+
+                genre: details.genres
+                    ?.map(genre => genre.name)
+                    .join(", ") || null,
+
+                duration: details.runtime || null,
+
+                posterUrl: details.poster_path
+                    ? `https://image.tmdb.org/t/p/w500${details.poster_path}`
+                    : null,
+
+                backdropUrl: details.backdrop_path
+                    ? `https://image.tmdb.org/t/p/w1280${details.backdrop_path}`
+                    : null,
+
+                language: details.original_language || null,
+
+                rating: details.vote_average ?? null
+            });
+
+            console.log(`Added: ${details.title}`);
+
+            // Small delay between requests
+            await sleep(200);
+        }
+
+        console.log("Seed completed successfully!");
+    } catch (error) {
+        console.error("Seed failed:", error);
+    } finally {
+        process.exit();
+    }
+};
+
+seed();

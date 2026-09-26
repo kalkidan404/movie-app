@@ -1,11 +1,10 @@
-//login, logout, users, userId
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 import { db } from "../src/prisma/db.js";
 
-
 // REGISTER
+
 const register = async (req, res, next) => {
     try {
         const { username, password } = req.body;
@@ -22,11 +21,9 @@ const register = async (req, res, next) => {
             });
         }
 
-        const existingUser = await db.orm.public.User.findUnique({
-            where: {
-                username
-            }
-        });
+        const existingUser = await db.orm.public.User
+            .where({ username })
+            .first();
 
         if (existingUser) {
             return res.status(409).json({
@@ -37,10 +34,8 @@ const register = async (req, res, next) => {
         const passwordHash = await bcrypt.hash(password, 10);
 
         const user = await db.orm.public.User.create({
-            data: {
-                username,
-                passwordHash
-            }
+            username,
+            passwordHash
         });
 
         res.status(201).json({
@@ -56,8 +51,8 @@ const register = async (req, res, next) => {
     }
 };
 
-
 // LOGIN
+
 const login = async (req, res, next) => {
     try {
         const { username, password } = req.body;
@@ -68,11 +63,9 @@ const login = async (req, res, next) => {
             });
         }
 
-        const user = await db.orm.public.User.findUnique({
-            where: {
-                username
-            }
-        });
+        const user = await db.orm.public.User
+            .where({ username })
+            .first();
 
         if (!user) {
             return res.status(401).json({
@@ -116,8 +109,8 @@ const login = async (req, res, next) => {
     }
 };
 
-
 // LOGOUT
+
 const logout = async (req, res, next) => {
     try {
         res.status(200).json({
@@ -128,20 +121,13 @@ const logout = async (req, res, next) => {
     }
 };
 
-
 // GET CURRENT USER
+
 const getMe = async (req, res, next) => {
     try {
-        const user = await db.orm.public.User.findUnique({
-            where: {
-                id: req.user.id
-            },
-            select: {
-                id: true,
-                username: true,
-                role: true
-            }
-        });
+        const user = await db.orm.public.User
+            .where({ id: req.user.id })
+            .first();
 
         if (!user) {
             return res.status(404).json({
@@ -149,14 +135,18 @@ const getMe = async (req, res, next) => {
             });
         }
 
-        res.status(200).json(user);
+        res.status(200).json({
+            id: user.id,
+            username: user.username,
+            role: user.role
+        });
     } catch (error) {
         next(error);
     }
 };
 
-
 // UPDATE CURRENT USER
+
 const updateMe = async (req, res, next) => {
     try {
         const { username, password } = req.body;
@@ -170,11 +160,9 @@ const updateMe = async (req, res, next) => {
                 });
             }
 
-            const existingUser = await db.orm.public.User.findUnique({
-                where: {
-                    username
-                }
-            });
+            const existingUser = await db.orm.public.User
+                .where({ username })
+                .first();
 
             if (existingUser && existingUser.id !== req.user.id) {
                 return res.status(409).json({
@@ -201,12 +189,9 @@ const updateMe = async (req, res, next) => {
             });
         }
 
-        const user = await db.orm.public.User.update({
-            where: {
-                id: req.user.id
-            },
-            data
-        });
+        const user = await db.orm.public.User
+            .where({ id: req.user.id })
+            .update(data);
 
         res.status(200).json({
             message: "User updated successfully",
@@ -221,27 +206,26 @@ const updateMe = async (req, res, next) => {
     }
 };
 
-
 // GET ALL USERS - ADMIN
+
 const getUsers = async (req, res, next) => {
     try {
-        const users = await db.orm.public.User.findMany({
-            select: {
-                id: true,
-                username: true,
-                role: true,
-                downloads: true
-            }
-        });
+        const users = await db.orm.public.User.all();
 
-        res.status(200).json(users);
+        const usersWithoutPasswords = users.map(user => ({
+            id: user.id,
+            username: user.username,
+            role: user.role
+        }));
+
+        res.status(200).json(usersWithoutPasswords);
     } catch (error) {
         next(error);
     }
 };
 
-
 // GET ONE USER - ADMIN
+
 const getUser = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
@@ -252,17 +236,9 @@ const getUser = async (req, res, next) => {
             });
         }
 
-        const user = await db.orm.public.User.findUnique({
-            where: {
-                id
-            },
-            select: {
-                id: true,
-                username: true,
-                role: true,
-                downloads: true
-            }
-        });
+        const user = await db.orm.public.User
+            .where({ id })
+            .first();
 
         if (!user) {
             return res.status(404).json({
@@ -270,14 +246,18 @@ const getUser = async (req, res, next) => {
             });
         }
 
-        res.status(200).json(user);
+        res.status(200).json({
+            id: user.id,
+            username: user.username,
+            role: user.role
+        });
     } catch (error) {
         next(error);
     }
 };
 
-
 // DELETE USER - ADMIN
+
 const deleteUser = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
@@ -288,11 +268,9 @@ const deleteUser = async (req, res, next) => {
             });
         }
 
-        const user = await db.orm.public.User.findUnique({
-            where: {
-                id
-            }
-        });
+        const user = await db.orm.public.User
+            .where({ id })
+            .first();
 
         if (!user) {
             return res.status(404).json({
@@ -300,11 +278,9 @@ const deleteUser = async (req, res, next) => {
             });
         }
 
-        await db.orm.public.User.delete({
-            where: {
-                id
-            }
-        });
+        await db.orm.public.User
+            .where({ id })
+            .delete();
 
         res.status(200).json({
             message: "User deleted successfully"
@@ -313,7 +289,6 @@ const deleteUser = async (req, res, next) => {
         next(error);
     }
 };
-
 
 export {
     register,

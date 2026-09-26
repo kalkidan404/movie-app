@@ -1,10 +1,8 @@
-// movies, movie/:id, deleteMovie, addMovie, updateMovie
-
 import { db } from "../src/prisma/db.js";
 
 const getMovies = async (req, res, next) => {
     try {
-        const movies = await db.orm.public.Movie.findMany();
+        const movies = await db.orm.public.Movie.all();
 
         res.status(200).json(movies);
     } catch (error) {
@@ -22,11 +20,9 @@ const getMovie = async (req, res, next) => {
             });
         }
 
-        const movie = await db.orm.public.Movie.findUnique({
-            where: {
-                id
-            }
-        });
+        const movie = await db.orm.public.Movie
+            .where({ id })
+            .first();
 
         if (!movie) {
             return res.status(404).json({
@@ -62,20 +58,18 @@ const addMovie = async (req, res, next) => {
         } = req.body;
 
         const movie = await db.orm.public.Movie.create({
-            data: {
-                title,
-                description,
-                releaseDate,
-                genre,
-                duration: Number(duration),
-                posterUrl,
-                backdropUrl,
-                language,
-                rating: Number(rating),
-                tmdbId: tmdbId !== undefined
-                    ? Number(tmdbId)
-                    : null
-            }
+            title,
+            description,
+            releaseDate,
+            genre,
+            duration: Number(duration),
+            posterUrl,
+            backdropUrl,
+            language,
+            rating: Number(rating),
+            tmdbId: tmdbId !== undefined
+                ? Number(tmdbId)
+                : null
         });
 
         res.status(201).json(movie);
@@ -113,11 +107,9 @@ const updateMovie = async (req, res, next) => {
             tmdbId
         } = req.body;
 
-        const movie = await db.orm.public.Movie.update({
-            where: {
-                id
-            },
-            data: {
+        const movie = await db.orm.public.Movie
+            .where({ id })
+            .update({
                 title,
                 description,
                 releaseDate,
@@ -134,8 +126,7 @@ const updateMovie = async (req, res, next) => {
                 tmdbId: tmdbId !== undefined
                     ? (tmdbId === null ? null : Number(tmdbId))
                     : undefined
-            }
-        });
+            });
 
         res.status(200).json(movie);
     } catch (error) {
@@ -159,11 +150,9 @@ const deleteMovie = async (req, res, next) => {
             });
         }
 
-        await db.orm.public.Movie.delete({
-            where: {
-                id
-            }
-        });
+        await db.orm.public.Movie
+            .where({ id })
+            .delete();
 
         res.status(200).json({
             message: "Movie deleted successfully"
@@ -172,19 +161,15 @@ const deleteMovie = async (req, res, next) => {
         next(error);
     }
 };
+
 const getRecommendations = async (req, res, next) => {
     try {
         const userId = req.user.id;
 
         // Get the user's downloads
-        const downloads = await db.orm.public.Download.findMany({
-            where: {
-                userId
-            },
-            include: {
-                movie: true
-            }
-        });
+        const downloads = await db.orm.public.Download
+            .where({ userId })
+            .all();
 
         // We need at least 10 downloads
         if (downloads.length < 10) {
@@ -194,20 +179,31 @@ const getRecommendations = async (req, res, next) => {
             });
         }
 
-        // Count genres and languages
         const genreCount = {};
         const languageCount = {};
 
+        // Get the movies belonging to the user's downloads
+        const downloadedMovies = [];
+
         for (const download of downloads) {
-            const movie = download.movie;
+            const movie = await db.orm.public.Movie
+                .where({ id: download.movieId })
+                .first();
+
+            if (!movie) {
+                continue;
+            }
+
+            downloadedMovies.push(movie);
 
             if (movie.genre) {
-                const genres = movie.genre.split(",").map(
-                    genre => genre.trim()
-                );
+                const genres = movie.genre
+                    .split(",")
+                    .map(genre => genre.trim());
 
                 for (const genre of genres) {
-                    genreCount[genre] = (genreCount[genre] || 0) + 1;
+                    genreCount[genre] =
+                        (genreCount[genre] || 0) + 1;
                 }
             }
 
@@ -232,17 +228,16 @@ const getRecommendations = async (req, res, next) => {
             download => download.movieId
         );
 
-        // Get all movies except already downloaded ones
-        const movies = await db.orm.public.Movie.findMany({
-            where: {
-                id: {
-                    notIn: downloadedMovieIds
-                }
-            }
-        });
+        // Get all movies
+        const movies = await db.orm.public.Movie.all();
+
+        // Remove movies already downloaded
+        const availableMovies = movies.filter(
+            movie => !downloadedMovieIds.includes(movie.id)
+        );
 
         // Score each movie
-        const recommendations = movies.map(movie => {
+        const recommendations = availableMovies.map(movie => {
             let score = 0;
 
             if (movie.genre) {
@@ -279,11 +274,16 @@ const getRecommendations = async (req, res, next) => {
             },
             recommendations: filteredRecommendations
         });
-
     } catch (error) {
-        next(error);
-    }
+           console.error("RECOMMENDATION ERROR:", error);
+
+    res.status(400).json({
+        message: error.message
+    });
+}
+    
 };
+
 export {
     getMovies,
     getMovie,
