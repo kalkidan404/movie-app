@@ -295,7 +295,14 @@
                   "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
-              }
+              },
+              "passwordHash": {
+    "nullable": false,
+    "type": {
+        "codecId": "pg/text@1",
+        "kind": "scalar"
+    }
+}
             },
             "relations": {
               "downloads": {
@@ -324,7 +331,10 @@
                 },
                 "username": {
                   "column": "username"
-                }
+                },"passwordHash": {
+  "column": "passwordHash"
+}
+                
               },
               "namespaceId": "public",
               "table": "user"
@@ -548,6 +558,11 @@
                     "plane": "storage"
                   }
                 },
+                "passwordHash": {
+  "codecId": "pg/text@1",
+  "nativeType": "text",
+  "nullable": false
+},
                 "username": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",

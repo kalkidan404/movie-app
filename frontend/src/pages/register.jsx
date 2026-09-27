@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 const Register = () => {
@@ -7,6 +6,8 @@ const Register = () => {
 
     const handleRegister = async (e) => {
         e.preventDefault();
+
+        console.log("REGISTER CLICKED");
 
         try {
             // Create account
@@ -45,6 +46,7 @@ const Register = () => {
                     })
                 }
             );
+          
 
             const loginData = await loginResponse.json();
 
@@ -60,7 +62,8 @@ const Register = () => {
             // Go to homepage
             window.location.href = "/";
         } catch (error) {
-            console.error(error);
+            console.error("Registration error:", error);
+            alert("Something went wrong. Check the console.");
         }
     };
 
@@ -68,8 +71,11 @@ const Register = () => {
         <div className="login">
             <div>
                 <h3 className="head">RoyalView</h3>
+
                 <h4>Watch on your terms</h4>
+
                 <h1>Great Stories Ready When You Are</h1>
+
                 <h3>
                     Build your personal offline movie library in just a few clicks
                 </h3>
@@ -77,13 +83,17 @@ const Register = () => {
 
             <div className="loginS">
                 <h4>Welcome to RoyalView</h4>
+
                 <h2>Create your account</h2>
+
                 <h4>Start building your personal movie library</h4>
 
                 <form onSubmit={handleRegister}>
-                    <label>Username</label>
+                    <label htmlFor="username">Username</label>
 
                     <input
+                        id="username"
+                        name="username"
                         className="username"
                         type="text"
                         placeholder="Choose a username"
@@ -92,9 +102,11 @@ const Register = () => {
                         required
                     />
 
-                    <label>Password</label>
+                    <label htmlFor="password">Password</label>
 
                     <input
+                        id="password"
+                        name="password"
                         className="password"
                         type="password"
                         placeholder="At least 6 characters"
@@ -112,7 +124,7 @@ const Register = () => {
 
                 <button
                     className="acc"
-                    onClick={() => window.location.href = "/login"}
+                    onClick={() => (window.location.href = "/login")}
                 >
                     Log in
                 </button>
