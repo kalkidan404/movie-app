@@ -1,28 +1,18 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+
+dotenv.config({ path: "../../.env" });
 
 import postgres from "@prisma/orm-postgres/runtime";
 
 import contractJson from "./contract.json" with { type: "json" };
 
-console.log(
-    "USER DOMAIN:",
-    JSON.stringify(
-        contractJson.domain?.namespaces?.public?.models?.User,
-        null,
-        2
-    )
-);
+const databaseUrl = process.env.DATABASE_URL;
 
-console.log(
-    "USER STORAGE:",
-    JSON.stringify(
-        contractJson.storage?.namespaces?.public,
-        null,
-        2
-    )
-);
+if (!databaseUrl) {
+    throw new Error("DATABASE_URL is missing");
+}
 
 export const db = postgres({
     contractJson,
-    url: process.env["DATABASE_URL"],
+    url: databaseUrl
 });

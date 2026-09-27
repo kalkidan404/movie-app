@@ -1,21 +1,37 @@
 import { db } from "../src/prisma/db.js";
 
 const downloads = async (req, res, next) => {
+
     try {
-        const downloads = await db.orm.public.Download.all();
 
-        if (downloads.length === 0) {
-            return res.status(404).json({
-                message: "Downloads is empty"
-            });
-        }
+        const allDownloads = await db.orm.public.Download.all();
 
-        res.status(200).json(downloads);
+        const userDownloads = allDownloads.filter(
+            (download) => download.userId === req.user.id
+        );
+
+        const downloadsWithMovies = await Promise.all(
+            userDownloads.map(async (download) => {
+
+                const movie = await db.orm.public.Movie
+                    .where({ id: download.movieId })
+                    .first();
+
+                return {
+                    ...download,
+                    movie
+                };
+
+            })
+        );
+
+        res.status(200).json(downloadsWithMovies);
+
     } catch (error) {
         next(error);
     }
-};
 
+};
 const download = async (req, res, next) => {
     try {
         const id = Number(req.params.id);
