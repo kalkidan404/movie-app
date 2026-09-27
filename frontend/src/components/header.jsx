@@ -21,16 +21,14 @@ const Header = () => {
 
     return (
         <header>
-            <button
-                className="Reafresh"
-                onClick={() => window.location.reload()}
-            ></button>
-
-            <h2>RoyalView</h2>
-
+            <div className="brand">
+           <button className="refresh-button" onClick={() => window.location.reload()}>
+     <span>▶</span>
+</button> <h2>Royal<span>View</span></h2>
+</div>
             <input
                 className="search"
-                placeholder="Search"
+                placeholder="🔍Search movies, genres..."
             />
 
             <div className="account">
