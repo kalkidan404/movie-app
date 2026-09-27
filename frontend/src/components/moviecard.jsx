@@ -1,8 +1,8 @@
 
 import {DownloadMovie} from "../components/downloads";
-const MovieCard = ({ movie }) => {
+const MovieCard = ({ movie, onClick }) => {
     return (
-        <div className="moviecard">
+        <div className="moviecard" onClick={onClick}>
 
             <img
                 src={movie.backdropUrl || movie.posterUrl}

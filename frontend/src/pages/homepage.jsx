@@ -6,9 +6,9 @@ import { AddMovieForm } from "../components/addMovieForm";
 import { SearchResults } from "../components/searchResults";
 import { Footer } from "../components/footer";
 import { Header } from "../components/header";
-
+import { useNavigate } from "react-router-dom";
 const HomePage = () => {
-
+const navigate = useNavigate();
     const [movies, setMovies] = useState([]);
     const [Allmovies, setAllmovies] = useState([]);
     const [user, setUser] = useState(null);
@@ -88,7 +88,7 @@ const HomePage = () => {
             ) : (
 
                 <>
-
+{movies.length>0&&(
                     <section className="recommended-section">
 
                         <h2>Recommended for You</h2>
@@ -107,7 +107,7 @@ const HomePage = () => {
                         </div>
 
                     </section>
-
+)}
 
                     <section className="AllMovies">
 
@@ -142,13 +142,12 @@ const HomePage = () => {
                         <div className="Movies">
 
                             {Allmovies.map((movie) => (
-
-                                <MovieCard
-                                    key={movie.id}
-                                    movie={movie}
-                                />
-
-                            ))}
+    <MovieCard
+        key={movie.id}
+        movie={movie}
+        onClick={() => navigate(`/movies/${movie.id}`)}
+    />
+))}
 
                         </div>
 

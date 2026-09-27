@@ -163,13 +163,18 @@ const deleteMovie = async (req, res, next) => {
 };
 
 const getRecommendations = async (req, res, next) => {
+
     try {
+
         const userId = req.user.id;
 
-        // Get the user's downloads
-        const downloads = await db.orm.public.Download
-            .where({ userId })
-            .all();
+        // Get all downloads
+        const allDownloads = await db.orm.public.Download.all();
+
+        // Keep only this user's downloads
+        const downloads = allDownloads.filter(
+            (download) => download.userId === userId
+        );
 
         // We need at least 10 downloads
         if (downloads.length < 10) {
@@ -183,9 +188,8 @@ const getRecommendations = async (req, res, next) => {
         const languageCount = {};
 
         // Get the movies belonging to the user's downloads
-        const downloadedMovies = [];
-
         for (const download of downloads) {
+
             const movie = await db.orm.public.Movie
                 .where({ id: download.movieId })
                 .first();
@@ -194,22 +198,25 @@ const getRecommendations = async (req, res, next) => {
                 continue;
             }
 
-            downloadedMovies.push(movie);
-
             if (movie.genre) {
+
                 const genres = movie.genre
                     .split(",")
-                    .map(genre => genre.trim());
+                    .map((genre) => genre.trim());
 
                 for (const genre of genres) {
+
                     genreCount[genre] =
                         (genreCount[genre] || 0) + 1;
+
                 }
             }
 
             if (movie.language) {
+
                 languageCount[movie.language] =
                     (languageCount[movie.language] || 0) + 1;
+
             }
         }
 
@@ -225,30 +232,34 @@ const getRecommendations = async (req, res, next) => {
 
         // IDs of movies the user already downloaded
         const downloadedMovieIds = downloads.map(
-            download => download.movieId
+            (download) => download.movieId
         );
 
         // Get all movies
         const movies = await db.orm.public.Movie.all();
 
-        // Remove movies already downloaded
+        // Remove already downloaded movies
         const availableMovies = movies.filter(
-            movie => !downloadedMovieIds.includes(movie.id)
+            (movie) => !downloadedMovieIds.includes(movie.id)
         );
 
         // Score each movie
-        const recommendations = availableMovies.map(movie => {
+        const recommendations = availableMovies.map((movie) => {
+
             let score = 0;
 
             if (movie.genre) {
+
                 const movieGenres = movie.genre
                     .split(",")
-                    .map(genre => genre.trim());
+                    .map((genre) => genre.trim());
 
                 for (const genre of movieGenres) {
+
                     if (topGenres.includes(genre)) {
                         score += 2;
                     }
+
                 }
             }
 
@@ -260,11 +271,12 @@ const getRecommendations = async (req, res, next) => {
                 ...movie,
                 score
             };
+
         });
 
         // Only return movies that match at least one preference
         const filteredRecommendations = recommendations
-            .filter(movie => movie.score > 0)
+            .filter((movie) => movie.score > 0)
             .sort((a, b) => b.score - a.score);
 
         res.status(200).json({
@@ -274,14 +286,19 @@ const getRecommendations = async (req, res, next) => {
             },
             recommendations: filteredRecommendations
         });
-    } catch (error) {
-           console.error("RECOMMENDATION ERROR:", error);
 
-    res.status(400).json({
-        message: error.message
+    } catch (error) {
+
+         console.error("RECOMMENDATION ERROR:", error);
+
+    res.status(200).json({
+        preferences: {},
+        recommendations: []
     });
-}
-    
+
+
+    }
+
 };
 
 export {

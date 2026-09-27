@@ -1,11 +1,35 @@
+import { useNavigate } from "react-router-dom";
+
 const Footer = ({ downloadCount }) => {
+
+    const navigate = useNavigate();
+
+    const handleBrowse = () => {
+        if (window.location.pathname === "/") {
+            window.scrollTo({
+                top: 0,
+                behavior: "smooth"
+            });
+        } else {
+            navigate("/");
+        }
+    };
+
     return (
+
         <footer>
-            <button className="browser">
+
+            <button
+                className="browser"
+                onClick={handleBrowse}
+            >
                 Browse
             </button>
 
-            <button className="downloads">
+            <button
+                className="downloads"
+                onClick={() => navigate("/downloads")}
+            >
                 Downloads
 
                 {downloadCount > 0 && (
@@ -13,7 +37,9 @@ const Footer = ({ downloadCount }) => {
                         {downloadCount}
                     </span>
                 )}
+
             </button>
+
         </footer>
     );
 };
