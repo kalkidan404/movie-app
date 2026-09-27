@@ -1,6 +1,7 @@
 const RecommendedMovieCard = ({ movie }) => {
     return (
         <div className="recommended-card">
+            
             <img
                 src={movie.backdropUrl || movie.posterUrl}
                 alt={movie.title}

@@ -9,6 +9,7 @@ const Register = () => {
         e.preventDefault();
 
         try {
+            // Create account
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/users/register`,
                 {
@@ -30,10 +31,34 @@ const Register = () => {
                 return;
             }
 
-            alert("Account created successfully!");
+            // Automatically log in after registration
+            const loginResponse = await fetch(
+                `${import.meta.env.VITE_API_URL}/users/login`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password
+                    })
+                }
+            );
 
-            window.location.href = "/login";
+            const loginData = await loginResponse.json();
 
+            if (!loginResponse.ok) {
+                alert("Account created, but automatic login failed.");
+                return;
+            }
+
+            // Save login information
+            localStorage.setItem("token", loginData.token);
+            localStorage.setItem("user", JSON.stringify(loginData.user));
+
+            // Go to homepage
+            window.location.href = "/";
         } catch (error) {
             console.error(error);
         }
@@ -41,29 +66,21 @@ const Register = () => {
 
     return (
         <div className="login">
-
             <div>
                 <h3 className="head">RoyalView</h3>
-
                 <h4>Watch on your terms</h4>
-
                 <h1>Great Stories Ready When You Are</h1>
-
                 <h3>
                     Build your personal offline movie library in just a few clicks
                 </h3>
             </div>
 
             <div className="loginS">
-
                 <h4>Welcome to RoyalView</h4>
-
                 <h2>Create your account</h2>
-
                 <h4>Start building your personal movie library</h4>
 
                 <form onSubmit={handleRegister}>
-
                     <label>Username</label>
 
                     <input
@@ -89,7 +106,6 @@ const Register = () => {
                     <button type="submit">
                         Create Account
                     </button>
-
                 </form>
 
                 <h4>Already have an account?</h4>
@@ -100,9 +116,7 @@ const Register = () => {
                 >
                     Log in
                 </button>
-
             </div>
-
         </div>
     );
 };

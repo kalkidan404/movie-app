@@ -73,9 +73,52 @@ const deleteDownload = async (req, res, next) => {
         next(error);
     }
 };
+const addDownload = async (req, res, next) => {
+    try {
+        const movieId = Number(req.params.id);
 
+        if (Number.isNaN(movieId)) {
+            return res.status(400).json({
+                message: "Invalid movie ID"
+            });
+        }
+
+        const movie = await db.orm.public.Movie
+            .where({ id: movieId })
+            .first();
+
+        if (!movie) {
+            return res.status(404).json({
+                message: "Movie not found"
+            });
+        }
+
+        const existingDownload = await db.orm.public.Download
+            .where({
+                userId: req.user.id,
+                movieId
+            })
+            .first();
+
+        if (existingDownload) {
+            return res.status(409).json({
+                message: "Movie already downloaded"
+            });
+        }
+
+        const newDownload = await db.orm.public.Download.create({
+            userId: req.user.id,
+            movieId
+        });
+
+        res.status(201).json(newDownload);
+    } catch (error) {
+        next(error);
+    }
+};
 export {
     downloads,
     download,
-    deleteDownload
+    deleteDownload,
+    addDownload
 };

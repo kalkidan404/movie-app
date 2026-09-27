@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
+import { DownloadMovie } from "../components/downloads";
 import { Header } from "../components/header";
 import { Footer } from "../components/footer";
 
@@ -76,7 +76,7 @@ const Movie = () => {
                             {movie.description}
                         </p>
 
-                        <button className="download-movie">
+                        <button className="download-movie" onClick={()=>{DownloadMovie(movie.id)}}>
                             ↓ Download Movie
                         </button>
 

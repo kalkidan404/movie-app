@@ -360,8 +360,11 @@ header {
 
     background: #db5227;
     color: white;
-
+   
     font-weight: bold;
+}
+.download:hover{
+    background: #0A6FB5;
 }
 
 

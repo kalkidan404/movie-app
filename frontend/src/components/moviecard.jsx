@@ -1,3 +1,5 @@
+
+import {DownloadMovie} from "../components/downloads";
 const MovieCard = ({ movie }) => {
     return (
         <div className="moviecard">
@@ -16,7 +18,7 @@ const MovieCard = ({ movie }) => {
 
                 <h6>{movie.genre}</h6>
 
-                <button className="download">
+                <button className="download" onClick={()=>DownloadMovie(movie.id)}>
                     ⬇ Download
                 </button>
             </div>
