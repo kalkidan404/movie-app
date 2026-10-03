@@ -289,8 +289,7 @@ const getRecommendations = async (req, res, next) => {
 
     } catch (error) {
 
-         console.error("RECOMMENDATION ERROR:", error);
-
+         next(error)
     res.status(200).json({
         preferences: {},
         recommendations: []

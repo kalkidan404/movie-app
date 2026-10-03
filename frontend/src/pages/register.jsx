@@ -7,7 +7,7 @@ const Register = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
 
-        console.log("REGISTER CLICKED");
+       
 
         try {
             // Create account
